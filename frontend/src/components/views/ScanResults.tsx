@@ -183,10 +183,8 @@ export function ScanResults({ scan }: Props) {
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<{role:'user'|'ai'; text:string}[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
-  const [aiSummaryCopied, setAiSummaryCopied] = useState(false);
   const [showJson, setShowJson] = useState(false);
   const [copyToast, setCopyToast] = useState('');
-  const aiSummaryCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const r = scan.results;
   const opsec = r.opsec;
@@ -209,7 +207,6 @@ export function ScanResults({ scan }: Props) {
   };
 
   useEffect(() => () => {
-    if (aiSummaryCopyTimerRef.current) clearTimeout(aiSummaryCopyTimerRef.current);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
 
@@ -237,17 +234,6 @@ export function ScanResults({ scan }: Props) {
     } catch (e: unknown) {
       setAiError(e instanceof Error ? e.message : 'Unknown error');
     } finally { setAiLoading(false); }
-  };
-
-  const copyAiSummary = async () => {
-    const summaryText = aiSummary.trim();
-    if (!summaryText) return;
-    try {
-      await navigator.clipboard.writeText(summaryText);
-      setAiSummaryCopied(true);
-      if (aiSummaryCopyTimerRef.current) clearTimeout(aiSummaryCopyTimerRef.current);
-      aiSummaryCopyTimerRef.current = setTimeout(() => setAiSummaryCopied(false), 1500);
-    } catch {}
   };
 
   const visibleTabs = TABS.filter(t => {
@@ -795,17 +781,8 @@ export function ScanResults({ scan }: Props) {
               {aiSummary && (
                 <div>
                   {aiModel && <div className="text-[10px] text-text-3 mb-3 font-mono">Model: {aiModel}</div>}
-                  <div className="mb-2 flex items-center justify-end gap-2">
-                    {aiSummaryCopied && <span className="text-[11px] text-text-3">Copied!</span>}
-                    <button
-                      type="button"
-                      onClick={copyAiSummary}
-                      className="text-text-3 hover:text-text-1 transition-colors p-1 rounded-sm hover:bg-surface-2"
-                      title="Copy summary"
-                      aria-label="Copy summary"
-                    >
-                      <Copy size={12} />
-                    </button>
+                  <div className="mb-2 flex items-center justify-end">
+                    <CopyIconButton onClick={() => copyValue(aiSummary)} label="Copy summary" />
                   </div>
                   <div className="text-[13px] text-text-1 leading-relaxed whitespace-pre-wrap">{aiSummary}</div>
                   <button onClick={runAi} className="btn-ghost h-8 px-3 text-[11px] mt-4">Regenerate</button>
