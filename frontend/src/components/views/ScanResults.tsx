@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ExternalLink, Printer, Shield, AlertTriangle, Globe, Server, Lock, User, Clock, Zap, Phone, MessageCircle, Map, GitBranch, Code, Brain, ChevronDown, ChevronUp, SendHorizontal, Mail, Copy, Eye, ShieldAlert } from 'lucide-react';
 import type { ScanResults, ScanMeta, OpsecFinding } from '@/lib/types';
-import { getReportUrl, getReportPdfUrl, generateAiSummary, sendAiChat, getMapData, getGraphData } from '@/lib/api';
+import { fetchReportBlob, generateAiSummary, sendAiChat, getMapData, getGraphData } from '@/lib/api';
 import { useTranslations } from '@/lib/i18n';
 
 type MapMarker = {
@@ -298,7 +298,7 @@ const TABS = [
 interface Props { scan: ScanMeta & { results: ScanResults }; }
 
 export function ScanResults({ scan }: Props) {
-  const { t: i18n } = useTranslations();
+  const { t: i18n, locale } = useTranslations();
   const [tab, setTab] = useState('findings');
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -309,6 +309,7 @@ export function ScanResults({ scan }: Props) {
   const [chatLoading, setChatLoading] = useState(false);
   const [showJson, setShowJson] = useState(false);
   const [copyToast, setCopyToast] = useState('');
+  const [reportLoading, setReportLoading] = useState<'html' | 'pdf' | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const r = scan.results;
   const opsec = r.opsec;
@@ -360,6 +361,29 @@ export function ScanResults({ scan }: Props) {
     } finally { setAiLoading(false); }
   };
 
+  const openReport = async (format: 'html' | 'pdf') => {
+    if (reportLoading) return;
+    setReportLoading(format);
+    try {
+      const blob = await fetchReportBlob(scan.id, format, locale);
+      const url = URL.createObjectURL(blob);
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `prism-report-${scan.id}.${format === 'pdf' ? 'pdf' : 'html'}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'Report open failed');
+    } finally {
+      setReportLoading(null);
+    }
+  };
+
   const visibleTabs = TABS.filter(t => {
     if (t.id === 'whois') return r.whois && !r.whois.error;
     if (t.id === 'dns') return r.dns?.records && Object.keys(r.dns.records).length > 0;
@@ -392,14 +416,14 @@ export function ScanResults({ scan }: Props) {
           </div>
         </div>
         <div className="flex gap-2">
-          <a href={getReportUrl(scan.id)} target="_blank" rel="noreferrer"
+          <button type="button" onClick={() => openReport('html')} disabled={reportLoading !== null}
             className="btn-ghost text-[11px] h-8 px-3">
-            <ExternalLink size={11} /> {i18n('results.htmlReport')}
-          </a>
-          <a href={getReportPdfUrl(scan.id)} target="_blank" rel="noreferrer"
+            {reportLoading === 'html' ? '…' : <ExternalLink size={11} />} {i18n('results.htmlReport')}
+          </button>
+          <button type="button" onClick={() => openReport('pdf')} disabled={reportLoading !== null}
             className="btn-ghost text-[11px] h-8 px-3">
-            <Printer size={11} /> {i18n('results.pdfReport')}
-          </a>
+            {reportLoading === 'pdf' ? '…' : <Printer size={11} />} {i18n('results.pdfReport')}
+          </button>
         </div>
       </div>
 
