@@ -55,6 +55,7 @@
   "results": {
     "htmlReport": "HTML отчёт",
     "pdfReport": "PDF отчёт",
+    "jsonReport": "Скачать JSON",
     "tabs": {
       "findings": "Находки",
       "whois": "WHOIS",

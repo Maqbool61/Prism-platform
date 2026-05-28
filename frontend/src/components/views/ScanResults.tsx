@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { ExternalLink, Printer, Shield, AlertTriangle, Globe, Server, Lock, User, Clock, Zap, Phone, MessageCircle, Map, GitBranch, Code, Brain, ChevronDown, ChevronUp, SendHorizontal, Mail, Copy, Eye, ShieldAlert } from 'lucide-react';
+import { ExternalLink, Printer, Download, Shield, AlertTriangle, Globe, Server, Lock, User, Clock, Zap, Phone, MessageCircle, Map, GitBranch, Code, Brain, ChevronDown, ChevronUp, SendHorizontal, Mail, Copy, Eye, ShieldAlert } from 'lucide-react';
 import type { ScanResults, ScanMeta, OpsecFinding } from '@/lib/types';
 import { fetchReportBlob, generateAiSummary, sendAiChat, getMapData, getGraphData } from '@/lib/api';
 import { useTranslations } from '@/lib/i18n';
@@ -27,6 +27,10 @@ let leafletLoader: Promise<any> | null = null;
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
+}
+
+function filenameSegment(value: string): string {
+  return value.trim().replace(/[^a-z0-9._-]+/gi, '-').replace(/^-+|-+$/g, '') || 'scan';
 }
 
 function loadLeaflet(): Promise<any> {
@@ -384,6 +388,22 @@ export function ScanResults({ scan }: Props) {
     }
   };
 
+  const downloadJson = () => {
+    try {
+      const blob = new Blob([JSON.stringify(scan.results, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prism-${filenameSegment(scan.target)}-${filenameSegment(scan.id)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    } catch (e: unknown) {
+      showToast(e instanceof Error ? e.message : 'JSON download failed');
+    }
+  };
+
   const visibleTabs = TABS.filter(t => {
     if (t.id === 'whois') return r.whois && !r.whois.error;
     if (t.id === 'dns') return r.dns?.records && Object.keys(r.dns.records).length > 0;
@@ -415,7 +435,7 @@ export function ScanResults({ scan }: Props) {
             )}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:justify-end">
           <button type="button" onClick={() => openReport('html')} disabled={reportLoading !== null}
             className="btn-ghost text-[11px] h-8 px-3">
             {reportLoading === 'html' ? '…' : <ExternalLink size={11} />} {i18n('results.htmlReport')}
@@ -423,6 +443,10 @@ export function ScanResults({ scan }: Props) {
           <button type="button" onClick={() => openReport('pdf')} disabled={reportLoading !== null}
             className="btn-ghost text-[11px] h-8 px-3">
             {reportLoading === 'pdf' ? '…' : <Printer size={11} />} {i18n('results.pdfReport')}
+          </button>
+          <button type="button" onClick={downloadJson}
+            className="btn-ghost text-[11px] h-8 px-3">
+            <Download size={11} /> {i18n('results.jsonReport')}
           </button>
         </div>
       </div>

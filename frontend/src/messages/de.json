@@ -55,6 +55,7 @@
   "results": {
     "htmlReport": "HTML-Bericht",
     "pdfReport": "PDF-Bericht",
+    "jsonReport": "JSON herunterladen",
     "tabs": {
       "findings": "Befunde",
       "whois": "WHOIS",
