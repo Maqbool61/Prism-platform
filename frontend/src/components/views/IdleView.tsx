@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { FileText, Mail, Bitcoin, QrCode, ChevronRight, Globe, User, Phone, Shield, Database, Zap, Eye, Activity } from 'lucide-react';
+import { FileText, Mail, Bitcoin, QrCode, ChevronRight, Globe, User, Phone, Shield, Database, Zap, Eye, Activity, Network } from 'lucide-react';
 import { Logo } from '../Logo';
 import type { ToolMode } from '@/lib/types';
 
@@ -9,6 +9,7 @@ const TOOLS = [
   { id: 'headers', label: 'Email Headers', desc: 'SPF, DKIM, routing hops', icon: Mail },
   { id: 'crypto', label: 'Crypto Address', desc: 'Bitcoin & Ethereum', icon: Bitcoin },
   { id: 'qr', label: 'QR Decode', desc: 'Decode & analyze', icon: QrCode },
+  { id: 'mac', label: 'MAC Lookup', desc: 'Vendor lookup', icon: Network },
 ] as const;
 
 const CAPS = [

@@ -7,6 +7,7 @@ import uuid
 import threading
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+import re
 import requests as _requests
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, UploadFile, File, Depends, Request
@@ -744,7 +745,68 @@ async def scan_url(request: Request, req: dict):
     result = await loop.run_in_executor(None, URLScanner().scan, url)
     return result
 
-@app.post("/api/crypto", dependencies=[Depends(require_api_key)])
+_OUI_DATA: Optional[Dict[str, str]] = None
+
+def _get_oui_data() -> Dict[str, str]:
+    global _OUI_DATA
+    if _OUI_DATA is None:
+        oui_path = os.path.join(os.path.dirname(__file__), "oui_data.json")
+        try:
+            with open(oui_path, "r", encoding="utf-8") as f:
+                _OUI_DATA = json.load(f)
+        except Exception:
+            _OUI_DATA = {}
+    return _OUI_DATA
+
+def _lookup_local_oui(mac: str) -> Optional[str]:
+    oui_data = _get_oui_data()
+    prefix = mac.upper().replace("-", ":")
+    first_three = ":".join(prefix.split(":")[:3])
+    return oui_data.get(first_three)
+
+@app.post("/api/mac-lookup", dependencies=[Depends(require_api_key)])
+@limiter.limit("20/minute")
+async def mac_lookup(request: Request, req: dict):
+    mac = req.get("mac", "").strip()
+    if not mac or len(mac) > 17:
+        return JSONResponse({"error": "No MAC address provided or format too long"}, status_code=400)
+    mac_pattern = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
+    if not mac_pattern.match(mac):
+        return JSONResponse({"error": "Invalid MAC address format. Expected: 00:00:5e:00:53:af"}, status_code=400)
+
+    normalized_mac = mac.upper().replace("-", ":")
+    cached = _get_cached("mac", normalized_mac)
+    if cached:
+        return cached
+
+    vendor = _lookup_local_oui(normalized_mac)
+    if vendor:
+        result = {"mac": normalized_mac, "vendor": vendor, "source": "local"}
+        _set_cache("mac", normalized_mac, result)
+        return result
+
+    try:
+        loop = asyncio.get_event_loop()
+        def _fetch():
+            resp = _requests.get(f"https://api.macvendors.com/{mac}", timeout=10)
+            if resp.status_code == 200:
+                return {"mac": normalized_mac, "vendor": resp.text.strip(), "source": "api"}
+            elif resp.status_code == 404:
+                return {"mac": normalized_mac, "vendor": None, "error": "Not found", "source": "api"}
+            else:
+                return {"mac": normalized_mac, "vendor": None, "error": f"API returned status {resp.status_code}", "source": "api"}
+        result = await loop.run_in_executor(None, _fetch)
+        if result.get("vendor") and not result.get("error"):
+            _set_cache("mac", normalized_mac, result)
+        return result
+    except Exception as e:
+        local_vendor = _lookup_local_oui(normalized_mac)
+        if local_vendor:
+            result = {"mac": normalized_mac, "vendor": local_vendor, "source": "local_fallback"}
+            _set_cache("mac", normalized_mac, result)
+            return result
+        return JSONResponse({"error": str(e), "mac": normalized_mac, "vendor": None}, status_code=500)
+
 @limiter.limit("20/minute")
 async def crypto_lookup(request: Request, req: dict):
     address = req.get("address", "").strip()
