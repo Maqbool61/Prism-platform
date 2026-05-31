@@ -44,6 +44,10 @@ export async function scanUrl(url: string): Promise<UrlScanResult> {
   return post('/api/url-scan', { url });
 }
 
+export async function lookupMac(mac: string): Promise<import('./types').MacResult> {
+  return post('/api/mac-lookup', { mac });
+}
+
 export async function lookupCrypto(address: string): Promise<CryptoResult> {
   return post('/api/crypto', { address });
 }

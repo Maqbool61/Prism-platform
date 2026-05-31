@@ -1,6 +1,6 @@
 export type ScanType = 'domain' | 'ip' | 'email' | 'phone' | 'username';
 export type ScanStatus = 'idle' | 'running' | 'completed' | 'failed';
-export type ToolMode = 'metadata' | 'headers' | 'crypto' | 'qr' | null;
+export type ToolMode = 'metadata' | 'headers' | 'crypto' | 'qr' | 'mac' | null;
 
 export interface ScanMeta {
   id: string;
@@ -283,5 +283,11 @@ export interface MetaResult {
   gps?: { lat: number; lng: number; altitude?: number; gps_time?: string } | null;
   pdf_meta?: Record<string, unknown>;
   docx_meta?: Record<string, unknown>;
+  error?: string;
+}
+
+export interface MacResult {
+  mac?: string;
+  vendor?: string | null;
   error?: string;
 }

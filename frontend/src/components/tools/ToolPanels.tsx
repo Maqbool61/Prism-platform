@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { Loader2, ArrowLeft, ExternalLink, Upload, XCircle, FileUp } from 'lucide-react';
 import * as api from '@/lib/api';
-import type { ToolMode, CryptoResult, QrResult, HeaderAnalysisResult, MetaResult } from '@/lib/types';
+import type { ToolMode, CryptoResult, QrResult, HeaderAnalysisResult, MetaResult, MacResult } from '@/lib/types';
 
 function Card({ title, children, className }: { title?: string; children: React.ReactNode; className?: string }) {
   return (
@@ -259,6 +259,39 @@ function MetadataPanel() {
   );
 }
 
+function MacPanel() {
+  const [addr, setAddr] = useState('');
+  const [result, setResult] = useState<MacResult | null>(null);
+  const [loading, setLoading] = useState(false);
+  const run = async () => {
+    if (!addr.trim()) return;
+    setLoading(true); setResult(null);
+    try {
+      setResult(await api.lookupMac(addr.trim()));
+    } catch (e) {
+      setResult({ error: e instanceof Error ? e.message : 'Request failed' });
+    }
+    setLoading(false);
+  };
+  return (
+    <div>
+      <Card title="MAC Address Vendor Lookup">
+        <div className="flex gap-2 flex-wrap"><Input value={addr} onChange={setAddr} placeholder="00:00:5e:00:53:af" onEnter={run} /><RunBtn loading={loading} label="Lookup" onClick={run} disabled={!addr.trim()} /></div>
+      </Card>
+      {result && (
+        result.error ? (
+          <ErrorCard message={result.error} />
+        ) : (
+          <Card>
+            <Row label="MAC Address" value={result.mac} />
+            <Row label="Vendor" value={result.vendor || 'Not found'} />
+          </Card>
+        )
+      )}
+    </div>
+  );
+}
+
 function HeadersPanel() {
   const [text, setText] = useState('');
   const [result, setResult] = useState<HeaderAnalysisResult | null>(null);
@@ -328,7 +361,7 @@ function HeadersPanel() {
 
 const TOOL_TITLES: Record<string, string> = {
   crypto: 'Crypto Address Lookup', qr: 'QR Code Decoder',
-  metadata: 'File Metadata & GEOINT', headers: 'Email Header Analyzer',
+  metadata: 'File Metadata & GEOINT', headers: 'Email Header Analyzer', mac: 'MAC Lookup',
 };
 
 interface Props {
@@ -354,6 +387,7 @@ export function ToolPanels({ mode, onBack }: Props) {
       {activePanel === 'qr' && <QrPanel />}
       {activePanel === 'metadata' && <MetadataPanel />}
       {activePanel === 'headers' && <HeadersPanel />}
+      {activePanel === 'mac' && <MacPanel />}
     </div>
   );
 }
