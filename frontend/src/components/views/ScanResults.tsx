@@ -84,6 +84,7 @@ function MapView({ scanId, onCopy }: { scanId: string; onCopy: (value: string) =
         if (cancelled || !mapHostRef.current) return;
         if (!mapRef.current) {
           mapRef.current = L.map(mapHostRef.current, { zoomControl: true });
+          mapRef.current.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener noreferrer">Leaflet</a>');
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap', maxZoom: 18,
           }).addTo(mapRef.current);

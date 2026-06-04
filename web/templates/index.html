@@ -1642,6 +1642,7 @@ function osint() {
         center: center ? [center.lat, center.lng] : [20, 0],
         zoom: defaultZoom,
       });
+      map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
       this.leafletMap = map;
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -1726,6 +1727,7 @@ function osint() {
       if (!container || !gps) return;
       if (this.metaLeafletMap) { this.metaLeafletMap.remove(); this.metaLeafletMap = null; }
       const map = L.map('meta-map-container', {center: [gps.lat, gps.lng], zoom: 15});
+      map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
       this.metaLeafletMap = map;
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd', maxZoom: 19,
