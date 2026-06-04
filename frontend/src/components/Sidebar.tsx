@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, Loader2, ChevronDown, ChevronUp, Lightbulb, RotateCcw, Trash2, History, GitCompare } from 'lucide-react';
 import { useTranslations } from '@/lib/i18n';
 import { listScans, type ScanListItem } from '@/lib/api';
@@ -94,6 +94,12 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isOpen, onCl
     setShowHistory(next);
     if (next) fetchHistory();
   };
+
+  const prevRunning = useRef(isRunning);
+  useEffect(() => {
+    if (prevRunning.current && !isRunning && showHistory) fetchHistory();
+    prevRunning.current = isRunning;
+  }, [isRunning, showHistory]);
 
   const toggleCompareSelect = (id: string) => {
     setCompareSelection(prev =>
@@ -239,7 +245,7 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isOpen, onCl
           onClick={toggleHistory}
           className="flex items-center justify-between w-full text-[10px] font-semibold text-text-3 uppercase tracking-wider hover:text-text-2 transition-colors mb-1"
         >
-          <span className="flex items-center gap-1.5"><History size={10} /> History</span>
+          <span className="flex items-center gap-1.5"><History size={10} /> {t('sidebar.history')}</span>
           {showHistory ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
         </button>
         {showHistory && (
@@ -249,7 +255,7 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isOpen, onCl
                 onClick={() => { onCompare(compareSelection[0], compareSelection[1]); setCompareMode(false); setCompareSelection([]); }}
                 className="btn-primary w-full text-[10px] py-1 mb-2"
               >
-                <GitCompare size={10} /> Compare selected
+                <GitCompare size={10} /> {t('sidebar.compareSelected')}
               </button>
             )}
             <div className="flex items-center gap-1 mb-1.5">
@@ -259,7 +265,7 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isOpen, onCl
                   compareMode ? 'bg-purple/20 text-purple border border-purple/30' : 'bg-surface-3 text-text-3 border border-border-1 hover:text-text-2'
                 }`}
               >
-                <span className="flex items-center gap-1"><GitCompare size={8} /> Compare</span>
+                <span className="flex items-center gap-1"><GitCompare size={8} /> {t('sidebar.compare')}</span>
               </button>
               <button onClick={fetchHistory} className="text-text-3 hover:text-text-2 transition-colors ml-auto">
                 <RotateCcw size={10} className={historyLoading ? 'spin' : ''} />
@@ -268,7 +274,7 @@ export function Sidebar({ onScan, onLoadScan, onCompare, isRunning, isOpen, onCl
             {historyLoading ? (
               <div className="flex justify-center py-2"><Loader2 size={14} className="spin text-text-3" /></div>
             ) : history.length === 0 ? (
-              <div className="text-[10px] text-text-3 opacity-40 italic">No scan history</div>
+              <div className="text-[10px] text-text-3 opacity-40 italic">{t('sidebar.noHistory')}</div>
             ) : (
               <div className="flex flex-col gap-0.5 max-h-40 overflow-y-auto">
                 {history.map(h => {

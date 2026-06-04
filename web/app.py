@@ -175,7 +175,7 @@ def _load_scan(scan_id: str) -> Optional[Dict]:
 def _list_scans_from_disk(principal: Optional[str] = None) -> List[Dict]:
     result = []
     try:
-        for fname in sorted(os.listdir(_SCANS_DIR), reverse=True):
+        for fname in os.listdir(_SCANS_DIR):
             if not fname.endswith(".json"):
                 continue
             try:
@@ -187,11 +187,10 @@ def _list_scans_from_disk(principal: Optional[str] = None) -> List[Dict]:
                 if (s.get("owner") or ANONYMOUS_PRINCIPAL) != principal:
                     continue
             result.append(s)
-            if len(result) >= 50:
-                break
     except Exception:
         pass
-    return result
+    result.sort(key=lambda s: s.get("started_at") or "", reverse=True)
+    return result[:50]
 
 def _scan_visible_to(scan: Dict, principal: str) -> bool:
     return (scan.get("owner") or ANONYMOUS_PRINCIPAL) == principal

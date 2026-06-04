@@ -13,6 +13,10 @@
     "targetPlaceholder": "dominio, IP, correo, teléfono…",
     "scanType": "Tipo de escaneo",
     "modulesTitle": "Módulos",
+    "history": "Historial",
+    "compare": "Comparar",
+    "compareSelected": "Comparar seleccionados",
+    "noHistory": "Sin historial",
     "modules": {
       "whois": "WHOIS",
       "dns": "DNS",
