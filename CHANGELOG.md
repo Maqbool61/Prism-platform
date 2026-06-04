@@ -38,10 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Loading skeleton** — pulse-animated placeholder shown during scan progress (#54).
 - **ESLint config** — `next/core-web-vitals` ruleset for frontend (#36).
 - **GitHub PR template** — standardized pull request description format (#48).
+- **Minor fixes**.
 
 ### Changed
 - Sidebar refactored to use i18n module labels (`sidebar.modules.<id>`) and localized scan type buttons.
 - `_rate_limit_exceeded_handler` replaces inline lambda for proper 429 response headers.
+
 
 ---
 
