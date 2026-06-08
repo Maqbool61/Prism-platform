@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🔍 PRISM — Open Source Intelligence Platform
+# PRISM — Open Source Intelligence Platform
 
 **Self-hosted OSINT platform with 22+ modules, OPSEC scoring, AI summary, and a real-time web dashboard.**
 
 Scan any domain, IP, email, phone, or username — get WHOIS, DNS, threat intel, breach data, username search, dark-web mirrors, OPSEC score, entity graphs, and HTML/PDF reports in seconds.
 
-**[🌐 Live Demo](https://getprism.su)** · **[🐳 Docker Quick Start](#docker-recommended)** · **[🏗️ Architecture](docs/ARCHITECTURE.md)** · **[🔒 Security](SECURITY.md)** · **[📋 Changelog](CHANGELOG.md)**
+**[Live Demo](https://getprism.su)** · **[Docker Quick Start](#docker-recommended)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Security](SECURITY.md)** · **[Changelog](CHANGELOG.md)**
 
 [![CI](https://github.com/NovaCode37/Prism-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/NovaCode37/Prism-platform/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-2.3.0-7c5cfc?style=flat-square)](CHANGELOG.md)
@@ -22,7 +22,7 @@ Scan any domain, IP, email, phone, or username — get WHOIS, DNS, threat intel,
 
 </div>
 
-> 💡 If you find PRISM useful, please consider giving it a ⭐ — it helps others discover the project and motivates further development.
+> If you find PRISM useful, please consider giving it a ⭐ — it helps others discover the project and motivates further development.
 
 ## Table of Contents
 
