@@ -214,101 +214,7 @@ class ScanRequest(BaseModel):
     target: str
     scan_type: str = "auto"
     modules: List[str] = []
-    webhook_url: Optional[str] = None
-
-WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "").strip()
-
-def _is_public_ip(addr) -> bool:
-    return not (
-        addr.is_private or addr.is_loopback or addr.is_reserved
-        or addr.is_link_local or addr.is_multicast or addr.is_unspecified
-    )
-
-def _resolve_all_public(hostname: str) -> None:
-    import ipaddress
-    import socket
-    try:
-        infos = socket.getaddrinfo(hostname, None)
-    except socket.gaierror:
-        try:
-            fallback_ip = socket.gethostbyname(hostname)
-        except socket.gaierror:
-            raise ValueError("webhook_url hostname cannot be resolved")
-        try:
-            addr = ipaddress.ip_address(fallback_ip)
-        except ValueError:
-            raise ValueError("webhook_url resolved to an invalid address")
-        if not _is_public_ip(addr):
-            raise ValueError("webhook_url resolves to a private/internal address")
-        return
-    seen = set()
-    for fam, _t, _p, _c, sa in infos:
-        ip_str = sa[0]
-        if ip_str in seen:
-            continue
-        seen.add(ip_str)
-        try:
-            addr = ipaddress.ip_address(ip_str)
-        except ValueError:
-            raise ValueError("webhook_url resolved to an invalid address")
-        if not _is_public_ip(addr):
-            raise ValueError("webhook_url resolves to a private/internal address")
-    if not seen:
-        raise ValueError("webhook_url hostname did not resolve")
-
-def _validate_webhook_url(url: str) -> str:
-    from urllib.parse import urlparse
-    if not url or len(url) > 2048:
-        raise ValueError("webhook_url is empty or too long")
-    parsed = urlparse(url)
-    if parsed.scheme not in ("http", "https") or not parsed.hostname:
-        raise ValueError("webhook_url must be http(s) with a hostname")
-    _resolve_all_public(parsed.hostname)
-    try:
-                                                                            
-                                                              
-        _requests.head(url, timeout=3, allow_redirects=False)
-    except Exception:
-                                                                       
-        pass
-    return url
-
-def _send_webhook(url: str, payload: Dict[str, Any]) -> None:
-    from urllib.parse import urlparse
-    parsed = urlparse(url)
-    if parsed.scheme not in ("http", "https") or not parsed.hostname:
-        return
-    try:
-        _resolve_all_public(parsed.hostname)
-    except ValueError as e:
-        msg = str(e)
-        if "cannot be resolved" not in msg and "did not resolve" not in msg:
-            return
-
-    webhook_format = os.environ.get("WEBHOOK_FORMAT", "raw")
-    if webhook_format == "slack":
-        payload = format_slack(payload)
-    elif webhook_format == "discord":
-        payload = format_discord(payload)
-
-    headers = {"Content-Type": "application/json", "User-Agent": "PRISM-Webhook/2.1.2"}
-    if WEBHOOK_SECRET:
-        headers["X-Prism-Secret"] = WEBHOOK_SECRET
-    try:
-        _requests.post(
-            url, json=payload, headers=headers,
-            timeout=10, allow_redirects=False,
-        )
-    except TypeError:
-        try:
-            _requests.post(
-                url, json=payload, headers=headers,
-                timeout=10,
-            )
-        except Exception:
-            pass
-    except Exception:
-        pass
+    force_refresh: bool = False
 
 def _detect_type(target: str) -> str:
     if "@" in target:
@@ -339,23 +245,10 @@ async def _push(scan_id: str, msg: Dict) -> None:
 
 _CACHED_MODULES = {"shodan", "hlr", "virustotal", "abuseipdb", "geoip"}
 
-def _done_message(name: str, result: Any, cached: bool = False) -> Dict[str, Any]:
-    status = classify(result)
-    msg: Dict[str, Any] = {"type": "module_done", "module": name, "status": status}
-    if cached:
-        msg["cached"] = True
-    reason = reason_for(result)
-    if reason and status != OK:
-        msg["reason"] = reason
-        if status == ERROR:
-            msg["error"] = reason
-    return msg
-
-
-async def _run_module(scan_id: str, name: str, coro_or_func, *args, **kwargs) -> Any:
+async def _run_module(scan_id: str, name: str, coro_or_func, *args, force_refresh: bool = False, **kwargs) -> Any:
     await _push(scan_id, {"type": "module_start", "module": name})
     cache_target = args[0] if args else None
-    if name in _CACHED_MODULES and cache_target:
+    if not force_refresh and name in _CACHED_MODULES and cache_target:
         cached = _get_cached(name, str(cache_target))
         # Ignore legacy non-OK cache entries so the module can re-run.
         if cached is not None and classify(cached) == OK:
@@ -379,7 +272,7 @@ async def _run_module(scan_id: str, name: str, coro_or_func, *args, **kwargs) ->
         await _push(scan_id, {"type": "module_done", "module": name, "status": ERROR, "error": str(exc)})
         return {"error": str(exc), "status": ERROR}
 
-async def _execute_scan(scan_id: str, target: str, scan_type: str, modules: list, webhook_url: Optional[str] = None) -> None:
+async def _execute_scan(scan_id: str, target: str, scan_type: str, modules: list, force_refresh: bool = False) -> None:
     results: Dict[str, Any] = {}
     all_modules = not modules
 
@@ -390,26 +283,26 @@ async def _execute_scan(scan_id: str, target: str, scan_type: str, modules: list
         if scan_type in ("domain", "ip"):
             if want("whois") and scan_type == "domain":
                 from modules.extra_tools import WhoisLookup
-                results["whois"] = await _run_module(scan_id, "whois", WhoisLookup().lookup, target)
+                results["whois"] = await _run_module(scan_id, "whois", WhoisLookup().lookup, target, force_refresh=force_refresh)
 
             if want("dns") and scan_type == "domain":
                 from modules.extra_tools import DNSLookup
-                results["dns"] = await _run_module(scan_id, "dns", DNSLookup().lookup, target)
+                results["dns"] = await _run_module(scan_id, "dns", DNSLookup().lookup, target, force_refresh=force_refresh)
 
             if want("geoip"):
                 from modules.extra_tools import GeoIPLookup
-                results["geoip"] = await _run_module(scan_id, "geoip", GeoIPLookup().lookup, target)
+                results["geoip"] = await _run_module(scan_id, "geoip", GeoIPLookup().lookup, target, force_refresh=force_refresh)
 
             if want("cert_transparency") and scan_type == "domain":
                 from modules.cert_transparency import CertTransparency
                 results["cert_transparency"] = await _run_module(
-                    scan_id, "cert_transparency", CertTransparency().search, target
+                    scan_id, "cert_transparency", CertTransparency().search, target, force_refresh=force_refresh
                 )
 
             if want("website") and scan_type == "domain":
                 from modules.extra_tools import WebsiteAnalyzer
                 results["website"] = await _run_module(
-                    scan_id, "website", WebsiteAnalyzer().analyze, target
+                    scan_id, "website", WebsiteAnalyzer().analyze, target, force_refresh=force_refresh
                 )
 
             if want("wayback") and scan_type == "domain":
@@ -418,9 +311,8 @@ async def _execute_scan(scan_id: str, target: str, scan_type: str, modules: list
                                                                             
                                                             
                 from modules.wayback import WaybackMachine
-                wb = WaybackMachine()
-                wayback_snap = await _run_module(
-                    scan_id, "wayback", wb.get_snapshots, target, 15
+                results["wayback"] = await _run_module(
+                    scan_id, "wayback", WaybackMachine().get_snapshots, target, 15, force_refresh=force_refresh
                 )
                 wayback_urls = await _run_module(
                     scan_id, "wayback_urls", wb.get_all_urls, target, 200
@@ -445,58 +337,59 @@ async def _execute_scan(scan_id: str, target: str, scan_type: str, modules: list
                         ip = socket.gethostbyname(target)
                     except Exception:
                         ip = target
-                results["shodan"] = await _run_module(scan_id, "shodan", ShodanLookup().host_info, ip)
+                results["shodan"] = await _run_module(scan_id, "shodan", ShodanLookup().host_info, ip, force_refresh=force_refresh)
 
             if want("virustotal"):
                 from modules.threat_intel import VirusTotal
                 vt = VirusTotal()
                 if scan_type == "ip":
-                    results["virustotal"] = await _run_module(scan_id, "virustotal", vt.check_ip, target)
+                    results["virustotal"] = await _run_module(scan_id, "virustotal", vt.check_ip, target, force_refresh=force_refresh)
                 else:
-                    results["virustotal"] = await _run_module(scan_id, "virustotal", vt.check_domain, target)
+                    results["virustotal"] = await _run_module(scan_id, "virustotal", vt.check_domain, target, force_refresh=force_refresh)
 
             if want("abuseipdb") and scan_type == "ip":
                 from modules.threat_intel import AbuseIPDB
-                results["abuseipdb"] = await _run_module(scan_id, "abuseipdb", AbuseIPDB().check_ip, target)
+                results["abuseipdb"] = await _run_module(scan_id, "abuseipdb", AbuseIPDB().check_ip, target, force_refresh=force_refresh)
 
             if want("onion") and scan_type == "domain":
                 from modules.onion_checker import OnionChecker
-                results["onion"] = await _run_module(scan_id, "onion", OnionChecker().check, target)
+                results["onion"] = await _run_module(scan_id, "onion", OnionChecker().check, target, force_refresh=force_refresh)
 
             if want("censys"):
                 from modules.censys_lookup import CensysLookup
                 cl = CensysLookup()
                 if scan_type == "domain":
-                    results["censys"] = await _run_module(scan_id, "censys", cl.search_domain, target)
+                    results["censys"] = await _run_module(scan_id, "censys", cl.search_domain, target, force_refresh=force_refresh)
                 else:
-                    results["censys"] = await _run_module(scan_id, "censys", cl.search_ip, target)
+                    results["censys"] = await _run_module(scan_id, "censys", cl.search_ip, target, force_refresh=force_refresh)
 
         elif scan_type == "email":
             if want("smtp"):
                 from modules.smtp_verify import SMTPVerifier
-                results["smtp"] = await _run_module(scan_id, "smtp", SMTPVerifier().verify_email, target)
+                results["smtp"] = await _run_module(scan_id, "smtp", SMTPVerifier().verify_email, target, force_refresh=force_refresh)
 
             if want("leaks"):
                 from modules.leak_lookup import LeakLookup
                 results["breaches"] = await _run_module(
-                    scan_id, "leaks", LeakLookup().check_email_full, target
+                    scan_id, "leaks", LeakLookup().check_email_full, target, force_refresh=force_refresh
                 )
 
             if want("emailrep"):
                 from modules.hunter import EmailRepLookup
                 results["emailrep"] = await _run_module(
-                    scan_id, "emailrep", EmailRepLookup().lookup, target
+                    scan_id, "emailrep", EmailRepLookup().lookup, target, force_refresh=force_refresh
                 )
 
         elif scan_type == "phone":
             if want("hlr"):
                 from modules.hlr_lookup import HLRLookup
                 hlr_obj = HLRLookup()
-                hlr = await _run_module(scan_id, "hlr", hlr_obj.validate_phone, target)
+                hlr = await _run_module(scan_id, "hlr", hlr_obj.validate_phone, target, force_refresh=force_refresh)
                 results["hlr"] = hlr
                 owner = await _run_module(
                     scan_id, "phone_owner", hlr_obj.reverse_lookup,
-                    hlr.get("formatted") or target
+                    hlr.get("formatted") or target,
+                    force_refresh=force_refresh
                 )
                 results["phone_owner"] = owner
                 results["phone"] = {
@@ -520,14 +413,14 @@ async def _execute_scan(scan_id: str, target: str, scan_type: str, modules: list
             tg = TelegramLookup()
             tg_target = target.lstrip("@").replace("t.me/", "").replace("telegram.me/", "").strip()
             results["telegram"] = await _run_module(
-                scan_id, "telegram", tg.run_lookup, tg_target, TELEGRAM_BOT_TOKEN or None
+                scan_id, "telegram", tg.run_lookup, tg_target, TELEGRAM_BOT_TOKEN or None, force_refresh=force_refresh
             )
 
         elif scan_type == "username":
             if want("blackbird"):
                 from modules.blackbird import Blackbird
                 bb = Blackbird(timeout=10, max_concurrent=25)
-                await _run_module(scan_id, "blackbird", bb.search, target)
+                await _run_module(scan_id, "blackbird", bb.search, target, force_refresh=force_refresh)
                 results["blackbird"] = [
                     {"site": r.site, "url": r.url, "status": r.status, "response_time": r.response_time}
                     for r in bb.results
@@ -536,7 +429,7 @@ async def _execute_scan(scan_id: str, target: str, scan_type: str, modules: list
             if want("maigret"):
                 from modules.maigret_wrapper import MaigretWrapper
                 results["maigret"] = await _run_module(
-                    scan_id, "maigret", MaigretWrapper().search, target
+                    scan_id, "maigret", MaigretWrapper().search, target, force_refresh=force_refresh
                 )
 
         await _push(scan_id, {"type": "module_start", "module": "opsec_score"})
@@ -623,7 +516,7 @@ async def start_scan(request: Request, req: ScanRequest):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            loop.run_until_complete(_execute_scan(scan_id, target, scan_type, req.modules, webhook_url))
+            loop.run_until_complete(_execute_scan(scan_id, target, scan_type, req.modules, req.force_refresh))
         finally:
             loop.close()
 
