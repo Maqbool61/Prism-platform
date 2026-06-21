@@ -20,6 +20,31 @@ except ImportError:
     DNS_AVAILABLE = False
 
 
+PRIVACY_EMAIL_DOMAINS = {
+    "withheldforprivacy.com", "whoisguard.com", "domainsbyproxy.com",
+    "privacyprotect.org", "whoisprivacyprotect.com", "contactprivacy.com",
+    "privacyguardian.org", "perfectprivacy.com", "identity-protect.org",
+    "whoisprivacycorp.com", "protecteddomainservices.com", "anonymize.com",
+    "privatewhois.com", "whoisprivacyservice.org", "data-protected.net",
+    "privacyprotect.email", "gandi.net",
+}
+
+_PRIVACY_EMAIL_HINTS = ("privacy", "whoisguard", "redacted", "withheld",
+                        "domainsbyproxy", "protecteddomain", "anonymiz")
+
+
+def is_privacy_email(email: str) -> bool:
+    e = str(email).strip().lower()
+    if "@" not in e:
+        return False
+    local, _, domain = e.partition("@")
+    if local in ("abuse", "abuse-contact"):
+        return True
+    if domain in PRIVACY_EMAIL_DOMAINS:
+        return True
+    return any(h in e for h in _PRIVACY_EMAIL_HINTS)
+
+
 class WhoisLookup:
 
     def lookup(self, domain: str) -> Dict[str, Any]:
@@ -70,7 +95,12 @@ class WhoisLookup:
 
             if w.emails:
                 emails = w.emails if isinstance(w.emails, list) else [w.emails]
-                result["emails"] = [e for e in emails if e]
+                cleaned: List[str] = []
+                for e in emails:
+                    e = str(e).strip()
+                    if e and not is_privacy_email(e) and e not in cleaned:
+                        cleaned.append(e)
+                result["emails"] = cleaned
 
         except Exception as e:
             result["error"] = str(e)
