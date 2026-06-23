@@ -46,6 +46,8 @@ class ShodanLookup:
                 return result
             if r.status_code == 401:
                 return annotate(result, ERROR, "Invalid Shodan API key")
+            if r.status_code == 403:
+                return annotate(result, SKIPPED, "Shodan host lookup requires a paid membership or query credits (free API keys return 403)")
             if r.status_code == 429:
                 return annotate(result, RATE_LIMITED, "Shodan API rate limit reached")
             if r.status_code != 200:
@@ -108,6 +110,8 @@ class ShodanLookup:
                 timeout=20,
             )
 
+            if r.status_code == 403:
+                return annotate(result, SKIPPED, "Shodan search requires a paid membership or query credits (free API keys return 403)")
             if r.status_code == 429:
                 return annotate(result, RATE_LIMITED, "Shodan API rate limit reached")
             if r.status_code != 200:
