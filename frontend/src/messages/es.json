@@ -238,6 +238,33 @@
       "invalid": "Formato JWT no válido. Se esperan tres partes separadas por puntos: header.payload.signature"
     }
   },
+  "watchlist": {
+    "title": "Listas de seguimiento",
+    "description": "Reescanear un objetivo periódicamente y recibir alertas cuando los resultados cambien (nuevos puertos abiertos, subdominios, filtraciones, registros DNS…). Configure un webhook para notificaciones externas.",
+    "target": "Objetivo",
+    "targetPlaceholder": "dominio, IP, correo, teléfono…",
+    "scanType": "Tipo de escaneo",
+    "intervalHours": "Intervalo (horas)",
+    "webhookUrl": "URL del webhook (opcional)",
+    "adding": "Añadiendo…",
+    "addToWatchlist": "Añadir a la lista",
+    "loading": "Cargando…",
+    "emptyState": "Sin listas de seguimiento. Añada un objetivo arriba.",
+    "everyNHours": "cada {n}h",
+    "runCount": "{n} ejecuciones",
+    "runCountOne": "{n} ejecución",
+    "lastRun": "último",
+    "nextRun": "próximo",
+    "changes": "cambios",
+    "noAlerts": "Sin alertas de cambios — se captura una línea base en la primera ejecución.",
+    "failedToLoad": "Error al cargar las listas",
+    "failedToCreate": "Error al crear la lista",
+    "failedToDelete": "Error al eliminar",
+    "back": "Volver",
+    "refresh": "Actualizar",
+    "alerts": "Alertas",
+    "delete": "Eliminar lista"
+  },
   "common": { "copy": "Copiar", "copied": "¡Copiado!", "copyFailed": "Error al copiar", "loading": "Cargando…", "error": "Error", "backToTop": "Volver arriba" },
   "lang": { "label": "Idioma", "en": "EN", "ru": "RU", "de": "DE", "fr": "FR", "es": "ES", "pl": "PL" }
 }

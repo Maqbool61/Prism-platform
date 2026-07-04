@@ -273,6 +273,33 @@
       "invalid": "Format JWT invalide. Trois parties séparées par des points attendues : header.payload.signature"
     }
   },
+  "watchlist": {
+    "title": "Listes de surveillance",
+    "description": "Rescanner une cible selon un calendrier et être alerté en cas de changement (nouveaux ports, sous-domaines, fuites, enregistrements DNS…). Définir un webhook pour les notifications externes.",
+    "target": "Cible",
+    "targetPlaceholder": "domaine, IP, e-mail, téléphone…",
+    "scanType": "Type de scan",
+    "intervalHours": "Intervalle (heures)",
+    "webhookUrl": "URL du webhook (optionnel)",
+    "adding": "Ajout en cours…",
+    "addToWatchlist": "Ajouter à la liste",
+    "loading": "Chargement…",
+    "emptyState": "Aucune liste de surveillance. Ajoutez une cible ci-dessus.",
+    "everyNHours": "toutes les {n}h",
+    "runCount": "{n} exécutions",
+    "runCountOne": "{n} exécution",
+    "lastRun": "dernier",
+    "nextRun": "prochain",
+    "changes": "changements",
+    "noAlerts": "Aucune alerte pour le moment — une référence est capturée lors de la première exécution.",
+    "failedToLoad": "Échec du chargement des listes",
+    "failedToCreate": "Échec de la création de la liste",
+    "failedToDelete": "Échec de la suppression",
+    "back": "Retour",
+    "refresh": "Actualiser",
+    "alerts": "Alertes",
+    "delete": "Supprimer la liste"
+  },
   "common": {
     "copy": "Copier",
     "copied": "Copié !",
