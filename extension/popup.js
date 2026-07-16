@@ -110,7 +110,11 @@ async function start(target, server, apiKey) {
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || data.error || `HTTP ${r.status}`);
     scanId = data.scan_id;
-  } catch (e) { return fail(`Cannot reach PRISM at ${server} — ${e.message}`); }
+  } catch (e) {
+    const msg = e.message || "";
+    if (/api key|\b40[13]\b/i.test(msg)) return fail("This PRISM instance needs an API key. Add it in the popup, or set Server to your own instance.");
+    return fail(`Cannot reach PRISM at ${server} — ${msg}`);
+  }
   const active = { scanId, server, apiKey, target };
   chrome.storage.local.set({ activeScan: active });
   poll(active);

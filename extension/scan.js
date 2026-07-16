@@ -56,7 +56,11 @@ chrome.storage.sync.get({ instanceUrl: DEFAULT_URL, apiKey: "" }, async ({ insta
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || data.error || `HTTP ${r.status}`);
     scanId = data.scan_id;
-  } catch (e) { return fail(`Cannot reach PRISM at ${server} — ${e.message}`); }
+  } catch (e) {
+    const msg = e.message || "";
+    if (/api key|\b40[13]\b/i.test(msg)) return fail("This PRISM instance needs an API key. Add it in the extension popup, or set Server to your own instance.");
+    return fail(`Cannot reach PRISM at ${server} — ${msg}`);
+  }
 
   const authHeaders = apiKey ? { "X-API-Key": apiKey } : {};
   for (let i = 0; i < 200; i++) {
