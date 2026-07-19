@@ -1181,7 +1181,7 @@ async def extract_metadata_endpoint(request: Request, file: UploadFile = File(..
             pass
 
 @app.post("/api/ai/summary", dependencies=[Depends(require_api_key)])
-@limiter.limit("5/minute")
+@limiter.limit("10/minute")
 async def ai_summary(request: Request, req: dict):
     if not _LLM_KEY:
         return JSONResponse({"error": "OPENROUTER_API_KEY or GROQ_API_KEY not set in .env"}, status_code=400)

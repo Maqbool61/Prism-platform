@@ -49,7 +49,18 @@ ANONYMOUS_PRINCIPAL = "anonymous"
 def _allow_anonymous_api() -> bool:
     return os.getenv("ALLOW_ANON_API", "").lower() in ("1", "true", "yes")
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["200/day", "60/hour"])
+def client_ip(request: Request) -> str:
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        first = xff.split(",")[0].strip()
+        if first:
+            return first
+    real = request.headers.get("X-Real-IP")
+    if real:
+        return real.strip()
+    return get_remote_address(request)
+
+limiter = Limiter(key_func=client_ip, default_limits=["200/day", "60/hour"])
 
 def _principal_from_key(key: str) -> str:
     return hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
