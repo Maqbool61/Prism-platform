@@ -94,7 +94,8 @@
       "line1": "Questa è una demo pubblica con quote API limitate. Alcuni moduli (Shodan, VirusTotal) potrebbero avere limiti di frequenza.",
       "line2Prefix": "Per l'accesso completo,",
       "selfHost": "ospita PRISM",
-      "line2Suffix": "con le tue chiavi API."
+      "line2Suffix": "con le tue chiavi API.",
+      "line3": "I moduli che dipendono da servizi di terze parti (crt.sh, Wayback Machine) possono restituire errori 5xx quando tali servizi non sono raggiungibili o limitano le richieste. L'analisi AI potrebbe non essere disponibile in questa demo: OpenRouter e Groq bloccano le richieste provenienti dalla regione di hosting della demo sul loro edge Cloudflare. Con il self-hosting funziona tutto regolarmente."
     }
   },
   "toolPanels": {

@@ -94,7 +94,8 @@
       "line1": "Ceci est une démo publique avec des quotas API limités. Certains modules (Shodan, VirusTotal) peuvent être soumis à des limites de débit.",
       "line2Prefix": "Pour un accès complet,",
       "selfHost": "auto-hébergez PRISM",
-      "line2Suffix": "avec vos propres clés API."
+      "line2Suffix": "avec vos propres clés API.",
+      "line3": "Les modules qui dépendent de services tiers (crt.sh, Wayback Machine) peuvent renvoyer des erreurs 5xx lorsque ces services sont indisponibles ou limitent le débit. L'analyse IA peut aussi être inaccessible sur cette démo : OpenRouter et Groq bloquent les requêtes provenant de la région d'hébergement de la démo au niveau de leur edge Cloudflare. En auto-hébergement, tout fonctionne normalement."
     }
   },
   "progress": {

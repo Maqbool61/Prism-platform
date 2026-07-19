@@ -88,7 +88,8 @@
       "line1": "Esta es una demo pública con cuotas de API limitadas. Algunos módulos (Shodan, VirusTotal) pueden tener límite de velocidad.",
       "line2Prefix": "Para acceso completo,",
       "selfHost": "autoaloje PRISM",
-      "line2Suffix": "con sus propias claves de API."
+      "line2Suffix": "con sus propias claves de API.",
+      "line3": "Los módulos que dependen de servicios de terceros (crt.sh, Wayback Machine) pueden devolver errores 5xx cuando esos servicios fallan o limitan las peticiones. El análisis con IA puede no estar disponible en esta demo: OpenRouter y Groq bloquean las solicitudes desde la región de alojamiento de la demo en su edge de Cloudflare. Al autoalojar PRISM, todo funciona con normalidad."
     }
   },
   "progress": { "modulesLabel": "módulos", "initializing": "Inicializando escaneo…", "running": "Ejecutando…", "log": "Registro de progreso" },

@@ -1571,7 +1571,14 @@ export function ScanResults({ scan, onHome }: Props) {
                   Generating analysis...
                 </div>
               )}
-              {aiError && <div className="text-red text-sm">{aiError}</div>}
+              {aiError && (
+                <div className="text-sm">
+                  <div className="text-red">{aiError}</div>
+                  <div className="text-[11px] text-text-3 leading-relaxed mt-2">
+                    {"On this public demo the LLM provider is often unreachable: OpenRouter and Groq reject requests coming from the demo server's hosting region at their Cloudflare edge, so the call never reaches the model. Self-host PRISM and point LLM_BASE_URL / LLM_API_KEY (or LLM_PROXY) at your own provider in .env, and this panel works normally."}
+                  </div>
+                </div>
+              )}
               {aiSummary && (
                 <div>
                   {aiModel && <div className="text-[10px] text-text-3 mb-3 font-mono">Model: {aiModel}</div>}

@@ -94,7 +94,8 @@
       "line1": "Dies ist eine öffentliche Demo mit begrenzten API-Kontingenten. Manche Module (Shodan, VirusTotal) können ratenbegrenzt sein.",
       "line2Prefix": "Für vollen Zugriff",
       "selfHost": "PRISM selbst hosten",
-      "line2Suffix": "mit eigenen API-Schlüsseln."
+      "line2Suffix": "mit eigenen API-Schlüsseln.",
+      "line3": "Module, die auf Dienste von Drittanbietern angewiesen sind (crt.sh, Wayback Machine), können 5xx-Fehler liefern, wenn diese ausfallen oder drosseln. Die KI-Analyse ist in dieser Demo eventuell nicht verfügbar: OpenRouter und Groq blockieren Anfragen aus der Hosting-Region der Demo an ihrem Cloudflare-Edge. Beim Self-Hosting funktioniert beides normal."
     }
   },
   "toolPanels": {

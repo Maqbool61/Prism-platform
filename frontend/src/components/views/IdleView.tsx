@@ -191,6 +191,7 @@ export function IdleView({ onTool, onScan, isStarting = false }: Props) {
             </a>
             {' '}{t('idle.demo.line2Suffix')}
           </p>
+          <p className="text-[11px] text-text-3 mt-2 pt-2 border-t border-border-1">{t('idle.demo.line3')}</p>
         </div>
       )}
     </div>
