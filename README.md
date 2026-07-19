@@ -355,6 +355,11 @@ docker compose up -d --force-recreate
 | `CACHE_TTL_HOURS`    | Per-module cache TTL (default `24`)                                     |
 | `WEBHOOK_SECRET`     | If set, signs webhook callbacks with `X-Prism-Secret`                   |
 | `DISABLE_DOCS`       | `true` to disable `/docs`, `/redoc`, `/openapi.json` in production      |
+| `SCAN_QUOTA_PER_DAY` | Daily scans per caller; `0`/unset = unlimited                            |
+| `LLM_BASE_URL`       | OpenAI-compatible chat-completions URL; overrides the provider default   |
+| `LLM_API_KEY`        | Key for `LLM_BASE_URL`; falls back to `OPENROUTER_API_KEY`/`GROQ_API_KEY`|
+| `LLM_MODEL`          | Model name for AI summary and chat; overrides the provider default       |
+| `LLM_PROXY`          | Optional `http(s)://` or `socks5://` proxy for outbound LLM requests     |
 
 ### Reverse proxy
 
@@ -713,7 +718,12 @@ Yes, MIT licensed and completely self-hosted.
 Try the live demo, or spin it up with the one-command Docker demo.
 
 **Which LLM does the AI summary use?**
-Any OpenAI-compatible endpoint — OpenRouter, Groq, or local Ollama all work.
+Any OpenAI-compatible endpoint — OpenRouter, Groq, or local Ollama all work. Set `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL` in `.env` to point at your own provider, plus `LLM_PROXY` if the request needs to go through a proxy.
+
+**Why do some modules fail on the public demo?**
+The demo is a shared-hosting instance with anonymous access and a daily scan quota, so it hits limits the average self-hosted install never will. Several modules also depend on third-party services that break on their own schedule — crt.sh regularly answers `502`, and the Wayback CDX API answers `503` under load. PRISM reports those upstream failures verbatim instead of hiding them.
+
+AI analysis is unavailable on the demo for a separate reason: OpenRouter and Groq both reject requests coming from the demo server's hosting region at their Cloudflare edge, so the call is refused before it ever reaches a model. That is an IP-level block, not a bug or a bad key — self-host PRISM (or set `LLM_BASE_URL` / `LLM_PROXY`) and the AI panel works normally.
 
 ---
 
